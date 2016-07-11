@@ -1,0 +1,108 @@
+---
+title: "Getting and Cleaning Data Project"
+author: "MP"
+date: "July 10, 2016"
+output: html_document
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+```{r,results="hide",echo=FALSE}
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+download.file(fileUrl, "Dataset.zip")
+library(utils) 
+unzip("Dataset.zip")
+files <- list.files("UCI HAR Dataset", recursive = TRUE)
+#reading training and test data
+ActivityTest <- read.table(file.path("UCI HAR Dataset","test","y_test.txt"), header = FALSE)
+ActivityTrain <- read.table(file.path("UCI HAR Dataset","train","y_train.txt"), header = FALSE)
+SubjectTest <- read.table(file.path("UCI HAR Dataset","test","subject_test.txt"), header = FALSE)
+SubjectTrain <- read.table(file.path("UCI HAR Dataset","train","subject_train.txt"), header = FALSE)
+FeaturesTest <- read.table(file.path("UCI HAR Dataset","test","X_test.txt"), header = FALSE)
+FeaturesTrain <- read.table(file.path("UCI HAR Dataset","train","X_train.txt"), header = FALSE)
+
+# Part 1. Merge training and test data sets:
+subject <- rbind(SubjectTest,SubjectTrain)
+activity <- rbind(ActivityTest,ActivityTrain)
+feature <- rbind(FeaturesTest,FeaturesTrain)
+names(subject) <- c("subject")
+names(activity) <- c("activity")
+FeatureNames <- read.table(file.path("UCI HAR Dataset","features.txt"), header = FALSE)
+names(feature) <- FeatureNames$V2
+data <- cbind(subject,activity,feature)
+
+# Part 2: extract only mean () and sd() measures
+data <- data[(grep("mean\\(\\)|std\\(\\)",names(data)))]
+data <- cbind(subject,activity,data)
+
+# Part 3: descriptive activity labeling
+
+data$activity <- factor(data$activity)
+ActivityLables <- read.table(file.path("UCI HAR Dataset","activity_labels.txt"),header = FALSE)
+levels(data$activity) <- ActivityLables$V2
+
+#Part 4: Appropriately naming the dataset
+
+names(data) <- gsub("^f","Frequency" ,names(data))
+names(data) <- gsub("^t","Time" ,names(data))
+names(data) <- gsub("BodyBody","Body" ,names(data))
+names(data) <- gsub("Acc","Accelerometer" ,names(data))
+names(data) <- gsub("Gyro","Gyroscope" ,names(data))
+names(data) <- gsub("Mag","Magnitude" ,names(data))
+
+#Part 5: tidy dataset
+library(plyr)
+data2 <- aggregate(.~ subject+activity, data, mean)
+data2 <- arrange(data2, subject , activity)
+write.table(data2, file= "tidydata.txt", row.names = FALSE, sep = "\t")
+```
+
+
+This code book provides additional information about the variables and data manipulations used to get the `tidydata.txt` in the course project for the Johns Hopkins Getting and Cleaning Data course. 
+
+#Source Data
+
+Original data can be obtained from [The UCI Machine Learning Repository](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip) 
+
+A full description of the data is available [here](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones)
+
+
+#R Script
+
+The script `run_analysis.R` perform the 5 steps instructed in the course project.
+
+  
+#Identifiers
+
+* `subject`: The ID of the test subjects. There are `r max(data2$subject)` subjects.
+* `activity`: The type of activity performed to take the measurements. These 6 activities are: 
+```{r,echo=FALSE}
+ActivityLables 
+```
+
+
+#Measurements
+
+```{r,echo=FALSE}
+names(data2[3:68]) 
+```
+
+#Data Manipulations
+1. Merge the training and the test sets using `rbind()`. Column names are assigned appropriately.The result is called `data`.
+2. Only mean and standard deviation measures are kept from the `data` set. This was done by using `grep()` through the names of the measures
+3. Descriptive activity labeling was conducted based on `activity_labels.txt`.
+4. Appropriately naming the measured variables using `gsub()` to substitude the extendedn meaningful names instead of abbreviations and avoid repetitions as follows:
+  * `"^f"` with `"Frequency"` 
+  * `"^t"` with `"Time"` 
+  * `"BodyBody"` with `"Body"` 
+  * `"Acc"` with `"Accelerometer"` 
+  * `"Gyro"` with `"Gyroscope"` 
+  * `"Mag"` with `"Magnitude"` 
+5. The final data set was generated with the average measures for each subject and activity and called `data2`. It was then stored as a text file (`tidydata.txt`). `tidydata.txt` is a tidy data set because:
+  * All variables are labeled appropriately and have names
+  * Each variable is in a different column
+  * Each observation of a variable is in a adifferent row
+  * There are no duplicate columns
+  * Measured variables have the same units 

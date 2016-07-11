@@ -1,0 +1,20 @@
+---
+title: "README.Rmd"
+author: "MP"
+date: "July 10, 2016"
+output: html_document
+---
+This is the course project for the Getting and Cleaning Data Coursera course. The R script, `run_analysis.R`, does the following:
+
+1. Download and unzip the dataset, `Dataset.zip` , into your working directory.
+2. Load the `activity`, `feature` and `subject` information for test and train groups.
+3. Merges the training and test datasets. The result is a data set called `data`
+4. Keeping only those columns which reflect a mean or standard deviation of the measured variables. Results updated the `data` set.
+5. Converts the activity column into factors and set the levels based on `activity_labels.txt` file.
+6. Appropriately naming the measured variables.
+7. Creates a tidy dataset that consists of the average value of each measured variable for each subject and activity pair.
+8. The end result is shown in the file `tidydata.txt`, which can be read into R with `read.table(header = TRUE)` {listing any settings you have changed from the default}
+
+## Additional Information
+
+You can find additional information about the variables, data and transformations in the CodeBook.Rmd file.
